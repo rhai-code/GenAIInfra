@@ -6,16 +6,8 @@ global:
   HUGGINGFACEHUB_API_TOKEN: "${HFTOKEN}"
   HF_TOKEN: "${HFTOKEN}"
 
-# Basic LLM service enablement (model details will come from rh-xeon-xxx.yaml)
-tgi:
-  enabled: false  # Disable TGI since we're using vLLM
-vllm:
-  enabled: true   # Enable vLLM but specific model and resources will come from rh-xeon-xxx.yaml
-
-# Disable Redis and Milvus since we're using Qdrant
+# Disable Redis since we're using Qdrant
 redis-vector-db:
-  enabled: false
-milvus:
   enabled: false
 
 # Enable and configure Qdrant as the vector database
@@ -38,40 +30,14 @@ qdrant:
   
   # Storage configuration - using emptyDir for demo purposes
   persistence:
-    enabled: false  # Disable persistent storage  
+    size: 5Gi
+    storageClassName: lvms-vg1
 
   # Disable the default init container since the ensure-dir-ownership init container converts long UIDs into scientific notation.
   updateVolumeFsOwnership: false
   
-  # Add our own init container with explicit UID
-  additionalInitContainers:
-    - name: ensure-dir-ownership
-      image: "docker.io/qdrant/qdrant:v1.13.1"
-      command: ["/bin/sh"]
-      args:
-        - -ec
-        - |
-          QDRANT_UID=1000870000
-          echo "Setting ownership to $QDRANT_UID:$QDRANT_UID"
-          chown -R "$QDRANT_UID:$QDRANT_UID" /qdrant/storage /qdrant/snapshots
-      volumeMounts:
-        - name: qdrant-storage
-          mountPath: /qdrant/storage
-        - name: qdrant-snapshots
-          mountPath: /qdrant/snapshots
-      securityContext:
-        # init container runs briefly as root to set up permission for main container.
-        runAsUser: 0
-        runAsGroup: 0
-
-  # Configure Qdrant security contexts for OpenShift with fixed UID
-  securityContext:
-    fsGroup: 1000870000
-  podSecurityContext:
-    fsGroup: 1000870000
+  # Configure Qdrant security contexts for OpenShift
   containerSecurityContext:
-    runAsUser: 1000870000
-    runAsGroup: 1000870000
     runAsNonRoot: true
     allowPrivilegeEscalation: false
     capabilities:
@@ -95,44 +61,3 @@ retriever-usvc:
   # Default retriever service port
   service:
     port: 7000
-
-# Enable TEI embedding and reranking services
-# (specific models and resources will come from rh-xeon-xxx.yaml)
-tei:
-  enabled: true
-  port: 2081
-teirerank:
-  enabled: true
-  port: 2082
-
-# Configure UI with RedHat-compatible image
-chatqna-ui:
-  image:
-    # modified image for redhat security
-    repository: edlee123/chatqna-ui
-    tag: "latest"
-  containerPort: 5173
-
-# Main chatqna configuration (megaservice)
-image:
-  repository: opea/chatqna
-  tag: "1.2"
-
-# Add security context
-podSecurityContext:
-  fsGroup: 1001080000
-securityContext:
-  runAsUser: 1001080000
-  runAsGroup: 1001080000
-  runAsNonRoot: true
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-    - ALL
-
-# Configure volumes for Qdrant storage
-volumes:
-  - name: qdrant-storage
-    emptyDir: {}
-  - name: qdrant-snapshots
-    emptyDir: {}

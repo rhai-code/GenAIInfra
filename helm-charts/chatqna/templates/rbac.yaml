@@ -1,0 +1,59 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+{{- if .Values.serviceAccount.create }}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "chatqna.serviceAccountName" . }}-scc
+  labels:
+    {{- include "chatqna.labels" . | nindent 4 }}
+rules:
+- apiGroups: ["security.openshift.io"]
+  resources: ["securitycontextconstraints"]
+  resourceNames: ["privileged"]
+  verbs: ["use"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "chatqna.serviceAccountName" . }}-scc
+  labels:
+    {{- include "chatqna.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "chatqna.serviceAccountName" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "chatqna.serviceAccountName" . }}-scc
+{{- end }}
+{{- if .Values.qdrant.enabled }}
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ printf "%s-qdrant" .Release.Name }}-scc
+  labels:
+    {{- include "chatqna.labels" . | nindent 4 }}
+rules:
+- apiGroups: ["security.openshift.io"]
+  resources: ["securitycontextconstraints"]
+  resourceNames: ["nonroot-v2"]
+  verbs: ["use"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ printf "%s-qdrant" .Release.Name }}-scc
+  labels:
+    {{- include "chatqna.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ printf "%s-qdrant" .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ printf "%s-qdrant" .Release.Name }}-scc
+{{- end }}

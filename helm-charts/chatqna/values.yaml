@@ -146,6 +146,14 @@ milvus:
   standalone:
     persistence:
       enabled: false
+  livenessProbe:
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    failureThreshold: 5
+  readinessProbe:
+    initialDelaySeconds: 15
+    periodSeconds: 5
+    failureThreshold: 10
 
 # Microservice layer, disabled by default
 llm-uservice:

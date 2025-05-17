@@ -8,9 +8,32 @@ redis-vector-db:
 # Enable and configure Milvus as the vector database
 milvus:
   enabled: true
-  port: 19530
   cluster:
     enabled: false
+
+  etcd:
+    enabled: false
+
+  pulsar:
+    enabled: false
+  pulsarv3:
+    enabled: false
+
+  minio:
+    enabled: false
+    tls:
+      enabled: false
+
+  extraConfigFiles:
+    user.yaml: |+
+      etcd:
+        use:
+          embed: true
+        data:
+          dir: /var/lib/milvus/etcd
+      common:
+        storageType: local
+
   standalone:
     resources:
       requests:
@@ -20,80 +43,10 @@ milvus:
         memory: "16Gi"   # Increased from 8Gi
         cpu: "8"         # Increased from 4
     persistence:
-      enabled: false  # For testing. Enable for production with proper storage
-    securityContext:
-      fsGroup: 1001080000
-    podSecurityContext:
-      fsGroup: 1001080000
-    containerSecurityContext:
-      runAsUser: 1001080000
-      runAsNonRoot: true
-      runAsGroup: 1001080000
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-        - ALL
-    imagePullSecrets:
-      - name: regcred
-  etcd:
-    replicaCount: 1
-    persistence:
-      enabled: false
-    securityContext:
-      fsGroup: 1000870000
-    podSecurityContext:
-      fsGroup: 1000870000
-    containerSecurityContext:
-      runAsUser: 1000870000
-      runAsNonRoot: true
-      runAsGroup: 1000870000
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-        - ALL
-    imagePullSecrets:
-      - name: regcred
-  pulsar:
-    enabled: false
-  minio:
-    mode: standalone
-    persistence:
-      enabled: false
-    resources:
-      requests:
-        memory: "256Mi"
-        cpu: "250m"
-      limits:
-        memory: "512Mi"
-        cpu: "500m"
-    securityContext:
-      fsGroup: 1001080000
-    podSecurityContext:
-      fsGroup: 1001080000
-    containerSecurityContext:
-      runAsUser: 1001080000
-      runAsNonRoot: true
-      runAsGroup: 1001080000
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-        - ALL
-    imagePullSecrets:
-      - name: regcred
-    service:
-      type: ClusterIP
-      port: 9000
-      nodePort: null
-    tls:
-      enabled: false
-      certSecret: ""
-      publicCrt: ""
-      privateKey: ""
-    mountPath: "/tmp/minio"
-    environment:
-      MINIO_UPDATE: "off"
-      MINIO_BROWSER: "on"
-      MINIO_PROMETHEUS_AUTH_TYPE: "public"
+      annotations:
+        helm.sh/resource-policy: null
+      persistentVolumeClaim:
+        size: 5Gi
 
 # Configure data-prep service to use Milvus backend
 data-prep:
@@ -124,5 +77,3 @@ retriever-usvc:
     limits:
       cpu: "8"
       memory: "16Gi"
-
-

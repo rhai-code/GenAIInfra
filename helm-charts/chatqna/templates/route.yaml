@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ template "chatqna.fullname" . }}
+  labels:
+    {{- include "chatqna.labels" . | nindent 4 }}
+spec:
+  port:
+    targetPort: nginx
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: {{ printf "%s-nginx" .Release.Name | trunc 63 | trimSuffix "-" }}
+    weight: 100
+  wildcardPolicy: None
