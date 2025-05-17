@@ -1,0 +1,18 @@
+---
+vllm:
+  enabled: false
+tgi:
+  enabled: false
+
+endpoint:
+  enabled: true
+  LLM_MODEL_ID: "gaudi-demo-granite-31-8b-instruct"
+
+modelcar:
+  endpoints:
+    llm:
+      host: "gaudi-demo-granite-31-8b-instruct-predictor.gaudi-demo.svc.cluster.local"
+      port: "8080"
+      model: "gaudi-demo-granite-31-8b-instruct"  # Match the model name from the LLM service
+      api_type: "vllm"  # Specify we're using vLLM API
+      api_base: "/v1"   # vLLM uses OpenAI-compatible /v1 endpoints

@@ -1,0 +1,17 @@
+vllm:
+  enabled: false
+tgi:
+  enabled: false
+
+endpoint:
+  enabled: true
+  LLM_MODEL_ID: "standard-qwen-25-7b"
+
+modelcar:
+  endpoints:
+    llm:
+      host: "standard-qwen-25-7b-predictor.ed-modelcar.svc.cluster.local"
+      port: "8080"
+      model: "standard-qwen-25-7b"  # Match the model name from the LLM service
+      api_type: "vllm"  # Specify we're using vLLM API
+      api_base: "/v1"   # vLLM uses OpenAI-compatible /v1 endpoints

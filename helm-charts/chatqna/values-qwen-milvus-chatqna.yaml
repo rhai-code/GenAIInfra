@@ -1,0 +1,100 @@
+---
+vllm:
+  enabled: false
+tgi:
+  enabled: false
+
+vllm:
+  enabled: false
+tgi:
+  enabled: false
+
+endpoint:
+  enabled: true
+  LLM_MODEL_ID: "standard-qwen-25-7b"
+
+modelcar:
+  endpoints:
+    llm:
+      host: "standard-qwen-25-7b-predictor.ed-modelcar.svc.cluster.local"
+      port: "8080"
+      model: "standard-qwen-25-7b"  # Match the model name from the LLM service
+      api_type: "vllm"  # Specify we're using vLLM API
+      api_base: "/v1"   # vLLM uses OpenAI-compatible /v1 endpoints
+
+# Disable Redis since we're using Milvus
+redis-vector-db:
+  enabled: false
+
+# Enable and configure Milvus as the vector database
+milvus:
+  enabled: true
+  cluster:
+    enabled: false
+
+  etcd:
+    enabled: false
+
+  pulsar:
+    enabled: false
+  pulsarv3:
+    enabled: false
+
+  minio:
+    enabled: false
+    tls:
+      enabled: false
+
+  extraConfigFiles:
+    user.yaml: |+
+      etcd:
+        use:
+          embed: true
+        data:
+          dir: /var/lib/milvus/etcd
+      common:
+        storageType: local
+
+  standalone:
+    resources:
+      requests:
+        memory: "8Gi"    # Increased from 4Gi
+        cpu: "4"         # Increased from 2
+      limits:
+        memory: "16Gi"   # Increased from 8Gi
+        cpu: "8"         # Increased from 4
+    persistence:
+      annotations:
+        helm.sh/resource-policy: null
+      persistentVolumeClaim:
+        size: 5Gi
+
+# Configure data-prep service to use Milvus backend
+data-prep:
+  DATAPREP_BACKEND: "MILVUS"
+  COLLECTION_NAME: "rag_milvus"
+  service:
+    port: 6007
+  # Add resources for faster document processing
+  resources:
+    requests:
+      cpu: "4"
+      memory: "8Gi"
+    limits:
+      cpu: "8"
+      memory: "16Gi"
+
+# Configure retriever service to use Milvus backend
+retriever-usvc:
+  RETRIEVER_BACKEND: "MILVUS"
+  COLLECTION_NAME: "rag_milvus"
+  service:
+    port: 7000
+  # Add resources for faster retrieval
+  resources:
+    requests:
+      cpu: "4"
+      memory: "8Gi"
+    limits:
+      cpu: "8"
+      memory: "16Gi"

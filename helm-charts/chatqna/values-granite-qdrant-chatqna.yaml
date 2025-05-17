@@ -1,0 +1,74 @@
+---
+vllm:
+  enabled: false
+tgi:
+  enabled: false
+
+endpoint:
+  enabled: true
+  LLM_MODEL_ID: "gaudi-demo-granite-31-8b-instruct"
+
+modelcar:
+  endpoints:
+    llm:
+      host: "gaudi-demo-granite-31-8b-instruct-predictor.gaudi-demo.svc.cluster.local"
+      port: "8080"
+      model: "gaudi-demo-granite-31-8b-instruct"  # Match the model name from the LLM service
+      api_type: "vllm"  # Specify we're using vLLM API
+      api_base: "/v1"   # vLLM uses OpenAI-compatible /v1 endpoints
+
+# Disable Redis since we're using Qdrant
+redis-vector-db:
+  enabled: false
+
+# Enable and configure Qdrant as the vector database
+qdrant:
+  enabled: true
+  port: 6333
+  tag: "v1.13.1"
+  # Use standalone mode for simpler deployment
+  config:
+    cluster:
+      enabled: false
+  # Configure Qdrant resources
+  resources:
+    requests:
+      memory: "4Gi"
+      cpu: "2"
+    limits:
+      memory: "8Gi"
+      cpu: "4"
+  
+  # Storage configuration - using emptyDir for demo purposes
+  persistence:
+    size: 5Gi
+    storageClassName: lvms-vg1
+
+  # Disable the default init container since the ensure-dir-ownership init container converts long UIDs into scientific notation.
+  updateVolumeFsOwnership: false
+  
+  # Configure Qdrant security contexts for OpenShift
+  containerSecurityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+
+# Configure data-prep service to use Qdrant backend
+data-prep:
+  DATAPREP_BACKEND: "QDRANT"
+  COLLECTION_NAME: "rag-qdrant"
+  QDRANT_PORT: 6333
+  # Default data-prep service port
+  service:
+    port: 6007
+
+# Configure retriever service to use Qdrant backend
+retriever-usvc:
+  RETRIEVER_BACKEND: "QDRANT"
+  QDRANT_INDEX_NAME: "rag-qdrant"
+  QDRANT_PORT: 6333
+  # Default retriever service port
+  service:
+    port: 7000
