@@ -1,3 +1,4 @@
+{{- with .Values.route.enabled }}
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
@@ -5,6 +6,9 @@ metadata:
   labels:
     {{- include "chatqna.labels" . | nindent 4 }}
 spec:
+  {{- with .Values.route.host }}
+  host: {{ .Values.host }}
+  {{- end }}
   port:
     targetPort: nginx
   tls:
@@ -15,3 +19,4 @@ spec:
     name: {{ printf "%s-nginx" .Release.Name | trunc 63 | trimSuffix "-" }}
     weight: 100
   wildcardPolicy: None
+{{- end }}
